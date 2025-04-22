@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>vworld map</title>
+    <meta
+      http-equiv="content-type"
+      content="text/html; charset=utf-8"
+    />
+    <meta
+      http-equiv="imagetoolbar"
+      content="no"
+    />
+    <style type="text/css">
+      v\:* {
+        behavior: url(#default#VML);
+      }
+      html,
+      body {
+        overflow: hidden;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        font-family: 'Lucida Grande', Geneva, Arial, Verdana, sans-serif;
+      }
+      body {
+        margin: 10px;
+        background: #fff;
+      }
+      h1 {
+        margin: 0;
+        padding: 6px;
+        border: 0;
+        font-size: 20pt;
+      }
+      #header {
+        height: 43px;
+        padding: 0;
+        background-color: #eee;
+        border: 1px solid #888;
+      }
+      #subheader {
+        height: 12px;
+        text-align: right;
+        font-size: 10px;
+        color: #555;
+      }
+      #map {
+        height: 90%;
+        width: 100%;
+        border: 1px solid #888;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.5.0/dist/ol.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ol@v10.5.0/ol.css"
+    />
+  </head>
+  <body>
+    <div
+      id="map"
+      class="map"
+    ></div>
+    <button id="myButton">숫자 원 추가</button>
+    <p style="color: #333">TEST</p>
+    <script type="text/javascript">
+      var mapTile = new ol.layer.Tile({
+        title: 'Overlay',
+        // opacity: 0.7,
+        //extent: [14218845.756874, 4479499.366349,14220221.035216, 4481707.268784],
+        source: new ol.source.XYZ({
+          attributions: '',
+          minZoom: 16,
+          maxZoom: 22,
+          crossOrigin: 'Anonymous',
+          //url: './{z}/{x}/{-y}.webp',
+          url: 'https://api.vworld.kr/req/wmts/1.0.0/570ACCA2-4E5B-3352-B392-AF05AF31C63B/Satellite/{z}/{y}/{x}.jpeg',
+        }),
+      });
+
+      var mapView = new ol.View({
+        center: ol.proj.fromLonLat([127.19499, 37.075289]), //좌표계 변환
+        zoom: 19,
+      });
+
+      var map = new ol.Map({
+        target: 'map',
+        layers: [mapTile],
+        view: mapView,
+      });
+
+      map.on('click', singleClick);
+
+      function singleClick(e) {
+        console.log('e', e);
+
+        var features = map.getFeaturesAtPixel(e.pixel);
+        if (features != null && features.length > 0) {
+          for (var i = 0; i < features.length; i++) {
+            const geometry = features[i].getGeometry();
+            if (geometry.getType() === 'Point') {
+              var listIndex = features[i].getProperties()['listIndex'];
+              if (listIndex >= 0) {
+                console.log('listIndex:' + listIndex);
+                //var onLocationChanged = "name=OnFeatureClick" + "|listIndex=" + listIndex;
+                //window.chrome.webview.postMessage(onLocationChanged);
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      var _workSource = null;
+      var _workVectorLayer = null;
+      function setMark(number, lat, lng, url) {
+        if (_workSource == null) {
+          _workSource = new ol.source.Vector({});
+        }
+        if (_workVectorLayer == null) {
+          _workVectorLayer = new ol.layer.Vector({ name: 'wgms_mobile' });
+          _workVectorLayer.setSource(_workSource);
+          console.log('_workVectorLayer', _workVectorLayer);
+
+          map.addLayer(_workVectorLayer);
+        }
+
+        const point = ol.proj.fromLonLat([lng, lat]);
+
+        const circleFeature = new ol.Feature({
+          geometry: new ol.geom.Point(point),
+          //geometry:new ol.geom.Circle({
+          //	center: ol.proj.fromLonLat([lng,lat]),
+          //	radius:5,
+          //}),
+        });
+
+        var style = new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 15,
+            scale: 1.0,
+            fill: new ol.style.Fill({
+              color: '#369',
+            }),
+            // stroke: new ol.style.Stroke({
+            //   color: 'White',
+            //   width: 1,
+            // }),
+          }),
+          text: new ol.style.Text({
+            text: number, // 여기에 원하는 숫자 입력
+            font: 'bold 20px sans-serif',
+            fill: new ol.style.Fill({ color: '#ff00ff' }),
+            stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
+            textAlign: 'center',
+            textBaseline: 'middle',
+          }),
+        });
+
+        // 스타일: 원 + 숫자
+        // const circleStyle = new ol.style.Style({
+        //   stroke: new ol.style.Stroke({
+        //     color: 'rgba(0, 153, 255, 0.8)',
+        //     width: 3,
+        //   }),
+        //   fill: new ol.style.Fill({
+        //     color: 'rgba(0, 153, 255, 0.2)',
+        //   }),
+        //   text: new ol.style.Text({
+        //     text: number, // 여기에 원하는 숫자 입력
+        //     font: 'bold 20px sans-serif',
+        //     fill: new ol.style.Fill({ color: '#333' }),
+        //     stroke: new ol.style.Stroke({ color: '#fff', width: 3 }),
+        //     textAlign: 'center',
+        //     textBaseline: 'middle',
+        //   }),
+        // });
+        circleFeature.setProperties({ listIndex: number });
+        circleFeature.setStyle(style);
+        _workSource.addFeature(circleFeature);
+      }
+
+      console.log('_workSource', _workSource);
+
+      document.getElementById('myButton').onclick = function () {
+        const testVal = [
+          {
+            order: 1,
+            x: 37.075289,
+            y: 127.19499,
+          },
+          {
+            order: 2,
+            x: 37.075215,
+            y: 127.194826,
+          },
+          {
+            order: 3,
+            x: 37.075115,
+            y: 127.19399,
+          },
+          {
+            order: 4,
+            x: 37.075315,
+            y: 127.194926,
+          },
+        ];
+        testVal.forEach((f) => {
+          setMark(f.order, f.x, f.y, 'https://www.naver.com');
+        });
+        // setMark(1, 37.075289, 127.19499, 'https://www.naver.com');
+        // setMark(2, 37.075215, 127.194826, 'https://www.naver.com');
+      };
+    </script>
+  </body>
+</html>
