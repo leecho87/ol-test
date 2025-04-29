@@ -43,6 +43,8 @@
       #map {
         height: 90%;
         width: 100%;
+        max-width:600px;
+        max-height:600px;
         border: 1px solid #888;
       }
     </style>
@@ -66,9 +68,22 @@
       accept="image/*"
     />
     <br />
-    <span id="lat-text"></span><span>/</span><span id="lon-text"></span>
+    <span id="lat-text"></span><span>/</span><span id="lon-text"></span><br />
+    <button id="deepLinkBtn">deepLink Test</button>
 
     <script type="text/javascript">
+
+        const deepLinkBtn = document.querySelector('#deepLinkBtn');
+
+        function openDeepLink(e){
+          const path = 'https://leecho87.github.io/ol-test/login/index.html';
+          const encodePath = encodeURIComponent(path);
+          window.open(`golfzon5://auth?executeurl=${encodePath}`);
+        }
+
+        deepLinkBtn.addEventListener('click', openDeepLink);
+
+
       var mapTile = new ol.layer.Tile({
         title: 'Overlay',
         // opacity: 0.7,
